@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class HugeInteger {
 	
-	private char[] hugeInt;
+	private int[] hugeInt;
 	
 	
 	//Constructors//
@@ -15,12 +15,17 @@ public class HugeInteger {
 			throw new Exception("Leading Zeroes Error!");
 		}
 		
-		hugeInt = new char[val.length()];	//allocates hugeInt with # of characters in val
+		hugeInt = new int[val.length()];	//allocates hugeInt with # of characters in val
 		for (i=0; i<val.length();i++){
 			if ((val.charAt(0) != '-') && (48 > ((int) val.charAt(i)) || ((int) val.charAt(i)) > 57)) {  //checks for invalid characters
 				throw new Exception("Invalid Character!");
 			}
-			hugeInt[i] = val.charAt(i);
+			else if (val.charAt(i) == '-') {
+				hugeInt[0] = (int) val.charAt(1)%48*-1;
+				i = 1;
+				continue;
+			}
+			hugeInt[i] = ((int) val.charAt(i))%48;
 		}
 	}
 	
@@ -30,10 +35,10 @@ public class HugeInteger {
 		}
 		int i;
 		Random rand = new Random();
-		hugeInt = new char[n];
-		hugeInt[0] = (char) ((rand.nextInt(9) + 1) + '0');
+		hugeInt = new int[n];
+		hugeInt[0] = ((rand.nextInt(9) + 1));
 		for (i=1; i<n; i++) {
-			hugeInt[i] = (char) (rand.nextInt(9) + '0');
+			hugeInt[i] = (rand.nextInt(9));
 		}
 	}
 	
@@ -44,44 +49,60 @@ public class HugeInteger {
 		return length;
 	}
 	
-	public char charAddition(char a, char b) {
-		char c = (char) ('0' + ((int)a)%48 + (int)(b%48));
-		return c;
-	}
-	
 	
 	//Methods//
 	public HugeInteger add(HugeInteger h) throws Exception {
 		int length = this.length() >= h.length() ? this.length() : h.length(); //creates starting size of sumArray (same size as bigger BigInt)
 		int i, place; 
 		
-		HugeInteger sumArray = new HugeInteger(length);
-//		int thisPlace = this.length()-1; //starting index at ones place of this BigInteger
-//		int hPlace = h.length()-1; //starting index of h BigInteger
 		
-		//[1,1,1] 2
-		//[1] 0
+		HugeInteger sumArray = new HugeInteger(length);
+		int thisPlace = this.length()-1; //starting index at ones place of this BigInteger
+		int hPlace = h.length()-1; //starting index of h BigInteger
+		int sum, carry;
+		
 		for (i=length-1; i>=0; i--) {
-			sumArray.hugeInt[i] = charAddition(this.hugeInt[i],h.hugeInt[i]);
-//			if (thisPlace == 0 || hPlace == 0) { //reached the end of one BigInt
-//				if (thisPlace == 0) {	
-//					while (hPlace>-1) {
-//						sumArray.hugeInt[i] = h.hugeInt[i];
-//						hPlace--;
-//					}
-//				}
-//				if (hPlace == 0) {	
-//					while (thisPlace>-1) {
-//						sumArray.hugeInt[i] = this.hugeInt[i];
-//						thisPlace--;
-//					}
-//				}
-//				break;
-//			}
-//			thisPlace--;
-//			hPlace--;
-//			
-//			
+			sum = this.hugeInt[thisPlace] + h.hugeInt[hPlace];
+			if (sum>9) { //this is the case where carry happens
+				sum %= 10;
+				sumArray.hugeInt[i] = sum;
+				if(i==0) { //this is the case where carry happens when no more digits remain
+					HugeInteger newSumArray = new HugeInteger(length+1);
+					for (i=1; i<length+1;i++) {
+						newSumArray.hugeInt[i] = sumArray.hugeInt[i-1];
+					}
+					newSumArray.hugeInt[0] = 1;
+					return(newSumArray);
+				}
+				else {
+					if (this.length()>=h.length()) {
+						this.hugeInt[i-1] += 1;
+					}
+					else {
+						h.hugeInt[i-1] += 1;
+					}
+				}
+			}
+			else {
+				sumArray.hugeInt[i] = sum;
+			}
+			//check to see if a hugeInt has reached its end:
+			if (thisPlace==0 || hPlace==0) { 
+				if (thisPlace==0) { //case where first hugeInt is smaller
+					for(i=hPlace-1;i>=0;i--) {
+						sumArray.hugeInt[i] = h.hugeInt[i]; 
+					}
+					break;
+				}
+				else if (hPlace==0) { //case where first hugeInt is bigger
+					for(i=thisPlace-1;i>=0;i--) {
+						sumArray.hugeInt[i] = this.hugeInt[i];
+					}
+					break;
+				}
+			}
+			hPlace--;
+			thisPlace--;
 		}
 
 		return sumArray;
@@ -107,7 +128,15 @@ public class HugeInteger {
 		int i;
 		String output = new String(); 
 		for (i=0; i<this.length(); i++) {
-			output = output + ((this.hugeInt[i]) + "");
+			if (this.hugeInt[i]<0) {
+				output = output + "-";
+				output = output + ((char)((this.hugeInt[i]*-1) + 48));
+				System.out.print(this.hugeInt[i]);
+				i++;
+				System.out.print(this.hugeInt[i]);
+				continue;
+			}
+			output = output + ((char)(this.hugeInt[i]+48) + "");
 //			System.out.print(this.hugeInt[i]);
 		}
 		return output;
